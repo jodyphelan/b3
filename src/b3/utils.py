@@ -1,9 +1,11 @@
+from contextlib import contextmanager
 import subprocess as sp
 import logging
 import os
 import signal
 import re
 from shutil import which
+import tempfile
 from typing import Optional
 import typer
 from pathlib import Path
@@ -18,7 +20,6 @@ app = typer.Typer(
 
 @app.command("setup")
 def setup():
-    conda_prefix = Path(os.getenv("CONDA_PREFIX"))
     plasmidfinder_db = Path(PLASMIDFINDER_DB)
     if plasmidfinder_db.exists() is False:
         logging.info(f"Plasmidfinder database not found at {plasmidfinder_db}")
@@ -35,6 +36,20 @@ def setup():
     else:
         logging.info(f"AMRFinder database found at {amrfinder_db}")
 
+def get_absolute_path(p: Path) -> Path:
+    return p.absolute()
+
+@contextmanager
+def temporary_directory():
+    cwd = Path.cwd()
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            logging.debug(f"Temporary directory created at {temp_dir_path}")
+            os.chdir(temp_dir_path)
+            yield temp_dir_path
+    finally:
+        os.chdir(cwd)
 
 def run_cmd(
     cmd: str,

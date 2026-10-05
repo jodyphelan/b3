@@ -41,7 +41,8 @@ def job_quast(
     if "arm64" in platform():
         #docker run --rm -v "$PWD:/data/" quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2  quast --nanopore /data/filtered_reads.fastq.gz  -o /data/ /data/contigs.fasta --threads 4
         cwd = os.getcwd()
-        cmd = f'docker run --rm -v "{cwd}:/data/" quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 quast -o /data/{output_dir.name} /data/{input_fasta.name} --threads {threads}'
+        fasta_input_dir = input_fasta.parent
+        cmd = f'docker run --rm -v "{fasta_input_dir}:/data/" -v "{cwd}:/output/" quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 quast -o /output/{output_dir.name} /data/{input_fasta.name} --threads {threads}'
     else:
         cmd = f"quast -o {output_dir} {input_fasta} --threads {threads}"
     run_cmd(cmd)

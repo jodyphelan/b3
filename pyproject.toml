@@ -8,6 +8,10 @@ authors = []
 license = "MIT"
 license-files = ["LICENSE"]
 dynamic = ["version", "description"]
+dependencies = [
+    "typer>=0.12",
+    "pydantic>=2.0",
+]
 
 [project.scripts]
 b3 = "b3:app"

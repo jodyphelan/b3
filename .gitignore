@@ -1,0 +1,26 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+pixi.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+.dist/
+build/
+dist/
+*.egg-info/
+.eggs/

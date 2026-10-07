@@ -40,10 +40,10 @@ class QuastResult(BaseModel):
     software_version: str
     num_contigs: int
     gc_content: float
-    l50: int
-    l90: int
-    n50: int
-    n90: int
+    L50: int
+    L90: int
+    N50: int
+    N90: int
     total_length: int
     largest_contig: int
 
@@ -80,3 +80,15 @@ class RmlstResult(BaseModel):
     software_version: str
     taxon: str
     support: int
+
+
+class FastaqcResult(BaseModel):
+    software_version: str
+    num_contigs: int
+    gc_content: float
+    L50: int
+    L90: int
+    N50: int
+    N90: int
+    total_length: int
+    largest_contig: int

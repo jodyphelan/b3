@@ -7,6 +7,7 @@ from .models import (
     PlasmidfinderResult,
     RmlstResult,
     QuastResult,
+    FastaqcResult,
 )
 from pathlib import Path
 import csv
@@ -18,7 +19,7 @@ def combine_results(
     mlst_result: Optional[MlstResult] = None,
     amrfinder_result: Optional[AmrfinderResult] = None,
     rmlst_result: Optional[RmlstResult] = None,
-    quast_result: Optional[QuastResult] = None,
+    fasta_stats_result: Optional[FastaqcResult] = None,
     plasmidfinder_result: Optional[PlasmidfinderResult] = None,
 ):
     rows = []
@@ -70,42 +71,42 @@ def combine_results(
         })
 
     # quast
-    if quast_result is not None:
+    if fasta_stats_result is not None:
         rows.append({
-            'key': 'quast:software_version',
-            'value': quast_result.software_version
+            'key': 'fasta_stats:software_version',
+            'value': fasta_stats_result.software_version
         })
         rows.append({
-            'key': 'quast:num_contigs',
-            'value': quast_result.num_contigs
+            'key': 'fasta_stats:num_contigs',
+            'value': fasta_stats_result.num_contigs
         })
         rows.append({
-            'key': 'quast:gc_content',
-            'value': quast_result.gc_content
+            'key': 'fasta_stats:gc_content',
+            'value': fasta_stats_result.gc_content
         })
         rows.append({
-            'key': 'quast:l50',
-            'value': quast_result.l50
+            'key': 'fasta_stats:L50',
+            'value': fasta_stats_result.L50
         })
         rows.append({
-            'key': 'quast:l90',
-            'value': quast_result.l90
+            'key': 'fasta_stats:L90',
+            'value': fasta_stats_result.L90
         })
         rows.append({
-            'key': 'quast:n50',
-            'value': quast_result.n50
+            'key': 'fasta_stats:N50',
+            'value': fasta_stats_result.N50
         })
         rows.append({
-            'key': 'quast:n90',
-            'value': quast_result.n90
+            'key': 'fasta_stats:N90',
+            'value': fasta_stats_result.N90
         })
         rows.append({
-            'key': 'quast:total_length',
-            'value': quast_result.total_length
+            'key': 'fasta_stats:total_length',
+            'value': fasta_stats_result.total_length
         })
         rows.append({
-            'key': 'quast:largest_contig',
-            'value': quast_result.largest_contig
+            'key': 'fasta_stats:largest_contig',
+            'value': fasta_stats_result.largest_contig
         })
 
     # plasmidfinder

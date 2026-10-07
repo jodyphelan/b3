@@ -12,6 +12,8 @@ from .jobs import app as jobs_app
 from .workflows import app as workflows_app
 from .utils import app as utils_app
 
+# Import tool modules so their @app.command decorators register with the jobs app.
+from .tools import amrfinder, fasta_stats, mlst, plasmidfinder, quast, rmlst  
 
 # automatically show help when no command is provided
 app = typer.Typer(

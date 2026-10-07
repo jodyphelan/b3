@@ -1,6 +1,7 @@
 import logging
 import os
 
+from b3.tools.fasta_stats import job_fasta_stats
 import typer
 from pathlib import Path
 from typing import Annotated
@@ -37,8 +38,8 @@ def bifrost_ONT(
     }
 
     with temporary_directory():
-        quast_output_dir = Path("quast_results")
-        quast_results = job_quast(input_fasta=input_fasta,output_dir=quast_output_dir,threads=threads)
+        fasta_stats_output_file = Path("fasta_stats_results.json")
+        fasta_stats_results = job_fasta_stats(input_fasta=input_fasta, output_file=fasta_stats_output_file)
         mlst_output_file = Path("mlst_results.txt")
         mlst_results = job_mlst(input_fasta=input_fasta, output_file=mlst_output_file, threads=threads)
         amrfinder_output_file = Path("amrfinder_results.txt")
@@ -54,7 +55,7 @@ def bifrost_ONT(
             mlst_result=mlst_results,
             amrfinder_result=amrfinder_results,
             rmlst_result=rmlst_results,
-            quast_result=quast_results,
+            fasta_stats_result=fasta_stats_results,
             plasmidfinder_result=plasmidfinder_results
         )
 

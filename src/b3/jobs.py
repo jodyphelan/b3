@@ -1,17 +1,4 @@
 import typer
-from .utils import run_cmd
-from pathlib import Path
-from .models import (
-    MlstResult,
-    AmrfinderHit,
-    AmrfinderResult,
-    RmlstResult,
-    QuastResult,
-    PlasmidfinderResult,
-)
-import csv
-from typing import Annotated
-import json
 
 
 app = typer.Typer(

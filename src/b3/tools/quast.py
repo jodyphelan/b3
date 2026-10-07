@@ -12,10 +12,10 @@ def parse_quast_results(output_dir: Path, software_version: str) -> QuastResult:
     normalised_keys = {
         "# contigs": {"name":"num_contigs","type": int},
         "GC (%)": {"name":"gc_content","type": float},
-        "L50": {"name":"l50","type": int},
-        "L90": {"name":"l90","type": int},
-        "N50": {"name":"n50","type": int},
-        "N90": {"name":"n90","type": int},
+        "L50": {"name":"L50","type": int},
+        "L90": {"name":"L90","type": int},
+        "N50": {"name":"N50","type": int},
+        "N90": {"name":"N90","type": int},
         "Total length": {"name":"total_length","type": int},
         "Largest contig": {"name":"largest_contig","type": int}
     }

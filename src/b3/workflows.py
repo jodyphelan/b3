@@ -33,7 +33,7 @@ def bifrost_ONT(
         output_dir.mkdir(parents=True, exist_ok=True)
 
     files_to_save = {
-        'mlst_result': "mlst_results.txt",
+        'combined_result': "combined_results.tsv",
     }
 
     with temporary_directory():
@@ -48,18 +48,18 @@ def bifrost_ONT(
         plasmidfinder_output_file = Path("plasmidfinder_results.json")
         plasmidfinder_results = job_plasmidfinder(input_fasta=input_fasta, output_file=plasmidfinder_output_file, threads=threads)
 
+        combined_output_file = output_dir / "combined_results.tsv"
+        combine_results(
+            output_file=combined_output_file,
+            mlst_result=mlst_results,
+            amrfinder_result=amrfinder_results,
+            rmlst_result=rmlst_results,
+            quast_result=quast_results,
+            plasmidfinder_result=plasmidfinder_results
+        )
+
         for file_name in files_to_save.values():
             if Path(file_name).exists():
                 Path(file_name).rename(output_dir / file_name)
 
 
-
-    combined_output_file = output_dir / "combined_results.tsv"
-    combine_results(
-        output_file=combined_output_file,
-        mlst_result=mlst_results,
-        amrfinder_result=amrfinder_results,
-        rmlst_result=rmlst_results,
-        quast_result=quast_results,
-        plasmidfinder_result=plasmidfinder_results
-    )

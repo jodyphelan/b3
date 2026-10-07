@@ -1,3 +1,5 @@
+import json
+
 from .models import (
     MlstResult,
     AmrfinderHit,
@@ -94,7 +96,14 @@ def combine_results(
                 'value': hit.query_id
             })
 
+    jsonified_rows = []
+    final_rows = []
+    for row in rows:
+        tmp = json.dumps(row)
+        if tmp not in jsonified_rows:
+            jsonified_rows.append(tmp)
+            final_rows.append(row)
     # write to output file
-    writer = csv.DictWriter(output_file.open('w', newline=''), fieldnames=['key', 'value'])
+    writer = csv.DictWriter(output_file.open('w', newline=''), fieldnames=['key', 'value'], delimiter='\t')
     writer.writeheader()
-    writer.writerows(rows)
+    writer.writerows(final_rows)

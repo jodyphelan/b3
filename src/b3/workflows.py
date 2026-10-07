@@ -54,7 +54,7 @@ def bifrost_ONT(
 
 
 
-    combined_output_file = output_dir / "combined_results.txt"
+    combined_output_file = output_dir / "combined_results.tsv"
     combine_results(
         output_file=combined_output_file,
         mlst_result=mlst_results,

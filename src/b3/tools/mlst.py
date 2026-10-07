@@ -15,9 +15,9 @@ def parse_mlst_output(output_file: Path) -> MlstResult:
 
     
     result = MlstResult(
-        scheme=data[0],
-        st=data[1],
-        alleles=data[2:]
+        scheme=data[1],
+        st=data[2],
+        alleles=data[3:]
     )
     return result
 

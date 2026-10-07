@@ -5,7 +5,6 @@ from .models import (
     MlstResult,
     AmrfinderHit,
     AmrfinderResult,
-    PlasmidfinderResult,
     RmlstResult,
     QuastResult,
     PlasmidfinderResult,

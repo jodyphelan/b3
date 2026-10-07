@@ -3,13 +3,7 @@ import csv
 from b3.utils import run_cmd
 from b3.models import AmrfinderResult, AmrfinderHit
 from typing import Annotated
-import typer
-
-app = typer.Typer(
-    no_args_is_help=True,
-    help="Commands related to AMRFinder",
-    context_settings={"help_option_names": ["-h", "--help"]}
-)
+from b3.jobs import app
 
 def parse_amrfinder_output(output_file: Path) -> AmrfinderResult:
     """Parse the AMRFinder output file and return an AmrfinderResult object."""

@@ -26,6 +26,10 @@ def combine_results(
     # mlst
     if mlst_result is not None:
         rows.append({
+            'key': 'mlst:software_version',
+            'value': mlst_result.software_version
+        })
+        rows.append({
             'key': 'mlst:st',
             'value': mlst_result.st
         })
@@ -36,6 +40,14 @@ def combine_results(
 
     # amrfinder
     if amrfinder_result is not None:
+        rows.append({
+            'key': 'amrfinder:software_version',
+            'value': amrfinder_result.software_version
+        })
+        rows.append({
+            'key': 'amrfinder:database_version',
+            'value': amrfinder_result.database_version
+        })
         for hit in amrfinder_result.hits:
             rows.append({
                 'key': f'amrfinder:hit:{hit.element_symbol}',
@@ -44,6 +56,10 @@ def combine_results(
 
     # rmlst
     if rmlst_result is not None:
+        rows.append({
+            'key': 'rmlst:software_version',
+            'value': rmlst_result.software_version
+        })
         rows.append({
             'key': 'rmlst:taxon',
             'value': rmlst_result.taxon
@@ -55,6 +71,10 @@ def combine_results(
 
     # quast
     if quast_result is not None:
+        rows.append({
+            'key': 'quast:software_version',
+            'value': quast_result.software_version
+        })
         rows.append({
             'key': 'quast:num_contigs',
             'value': quast_result.num_contigs
@@ -90,6 +110,14 @@ def combine_results(
 
     # plasmidfinder
     if plasmidfinder_result is not None:
+        rows.append({
+            'key': 'plasmidfinder:software_version',
+            'value': plasmidfinder_result.software_version
+        })
+        rows.append({
+            'key': 'plasmidfinder:database_version',
+            'value': plasmidfinder_result.database_version
+        })
         for hit in plasmidfinder_result.hits:
             rows.append({
                 'key': f'plasmidfinder:hit:{hit.name}',

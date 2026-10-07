@@ -1,13 +1,14 @@
 from pathlib import Path
 import csv
-from b3.utils import run_cmd
+from b3.utils import get_software_version, run_cmd
 from b3.models import AmrfinderResult, AmrfinderHit
 from typing import Annotated
 from b3.jobs import app
 
-def parse_amrfinder_output(output_file: Path) -> AmrfinderResult:
+def parse_amrfinder_output(output_file: Path, software_version: str, db_version: str) -> AmrfinderResult:
     """Parse the AMRFinder output file and return an AmrfinderResult object."""
     hits = []
+    
     with open(output_file, "r") as f:
         for row in csv.DictReader(f, delimiter="\t"):
             hit = AmrfinderHit(
@@ -36,8 +37,11 @@ def parse_amrfinder_output(output_file: Path) -> AmrfinderResult:
             )
             hits.append(hit)
 
-
-    return AmrfinderResult(hits=hits)
+    return AmrfinderResult(
+        software_version=software_version, 
+        database_version=db_version,
+        hits=hits
+    )
 
 @app.command(
     "amrfinder", 
@@ -52,4 +56,7 @@ def job_amrfinder(
     """Run an AMRFinder job on the input FASTA file and save results to the output directory."""
     cmd = f"amrfinder --threads {threads} --nucleotide {input_fasta} > {output_file}"
     run_cmd(cmd)
-    return parse_amrfinder_output(output_file)
+    software_version = get_software_version("amrfinder --version", "(.+)")
+    db_version = get_software_version("amrfinder --database_version","Database version: (.+)")
+
+    return parse_amrfinder_output(output_file, software_version, db_version)

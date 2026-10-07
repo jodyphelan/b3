@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Annotated
 from b3.models import QuastResult
-from b3.utils import run_cmd
+from b3.utils import get_software_version, run_cmd
 from ..jobs import app
 from platform import platform
 import os
 
-def parse_quast_results(output_dir: Path) -> QuastResult:
+def parse_quast_results(output_dir: Path, software_version: str) -> QuastResult:
     """Parse QUAST results from the output directory and return a QuastResult object."""
     extract = {}
     normalised_keys = {
@@ -24,7 +24,7 @@ def parse_quast_results(output_dir: Path) -> QuastResult:
         if row[0] in normalised_keys:
             key_info = normalised_keys[row[0]]
             extract[key_info["name"]] = key_info["type"](row[1])
-    result = QuastResult(**extract)
+    result = QuastResult(software_version=software_version, **extract)
     return result
 
 @app.command(
@@ -43,7 +43,10 @@ def job_quast(
         cwd = os.getcwd()
         fasta_input_dir = input_fasta.parent
         cmd = f'docker run --rm -v "{fasta_input_dir}:/data/" -v "{cwd}:/output/" quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 quast -o /output/{output_dir.name} /data/{input_fasta.name} --threads {threads}'
+        run_cmd(cmd)
+        software_version = get_software_version("docker run --rm quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 quast --version", "QUAST v(.+)")
     else:
         cmd = f"quast -o {output_dir} {input_fasta} --threads {threads}"
-    run_cmd(cmd)
-    return parse_quast_results(output_dir)
+        run_cmd(cmd)
+        software_version = get_software_version("quast --version", "QUAST v(.+)")
+    return parse_quast_results(output_dir, software_version)

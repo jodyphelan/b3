@@ -104,3 +104,18 @@ def run_cmd(
         if exit_on_error:
             raise ValueError("Command Failed:\n%s\nstderr:\n%s" % (cmd, stderr_text))
     return result
+
+
+def get_software_version(version_command: str, version_regex: str) -> str:
+    with sp.Popen(
+        ["/bin/bash", "-c", version_command],
+        stdout=sp.PIPE,
+        stderr=sp.PIPE,
+        start_new_session=True,
+    ) as process:
+        stdout, _stderr = process.communicate()
+        output = stdout.decode("utf-8", errors="ignore") if stdout else ""
+        match = re.search(version_regex, output)
+        if not match:
+            raise ValueError(f"Could not determine software version from command: {version_command}")
+        return match.group(1)

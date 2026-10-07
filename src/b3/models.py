@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class MlstResult(BaseModel):
+    software_version: str
     scheme: str
     st: str
     alleles: list[str]
@@ -31,9 +32,12 @@ class AmrfinderHit(BaseModel):
     hmm_description: str
 
 class AmrfinderResult(BaseModel):
+    software_version: str
+    database_version: str
     hits: list[AmrfinderHit] = []
 
 class QuastResult(BaseModel):
+    software_version: str
     num_contigs: int
     gc_content: float
     l50: int
@@ -68,8 +72,11 @@ class PlasmidfinderHit(BaseModel):
     ref_string: str
 
 class PlasmidfinderResult(BaseModel):
+    software_version: str
+    database_version: str
     hits: list[PlasmidfinderHit] = []
 
 class RmlstResult(BaseModel):
+    software_version: str
     taxon: str
     support: int

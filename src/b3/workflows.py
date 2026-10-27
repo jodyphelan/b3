@@ -143,7 +143,7 @@ def bifrost_ONT(
 
         for file_name in files_to_save.values():
             if Path(file_name).exists():
-                Path(file_name).rename(output_dir / file_name)
+                Path(file_name).rename(output_dir / file_name.name)
 
 @app.command()
 def bifrost_illumina(
@@ -328,4 +328,4 @@ def bifrost_illumina(
 
         for file_name in files_to_save:
             if Path(file_name).exists():
-                Path(file_name).rename(output_dir / file_name)
+                Path(file_name).rename(output_dir / file_name.name)

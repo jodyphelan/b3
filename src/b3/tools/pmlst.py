@@ -30,6 +30,7 @@ def parse_pmlst_report(report_path: Path, software_version: str, database_versio
     return PmlstResult(
         software_version=software_version,
         database_version=database_version,
+        plasmids=row["plasmids"] if row["plasmids"]!="" else None,
         IncF=int(row["IncF"]) if row["IncF"]!="" else None,
         IncI1=int(row["IncI1"]) if row["IncI1"]!="" else None,
         IncA_C=int(row["IncA/C"]) if row["IncA/C"]!="" else None,

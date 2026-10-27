@@ -126,6 +126,7 @@ class BrackenResult(BaseModel):
 class PmlstResult(BaseModel):
     software_version: str
     database_version: str
+    plasmids: str | None = None
     IncF: int | None = None
     IncI1: int | None = None
     IncA_C: int | None = Field(default=None, alias="IncA/C")

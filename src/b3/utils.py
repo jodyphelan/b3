@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import subprocess
 import subprocess as sp
 import logging
 import os
@@ -51,13 +52,29 @@ def temporary_directory():
     finally:
         os.chdir(cwd)
 
+@contextmanager
+def debug_temporary_directory():
+    cwd = Path.cwd()
+    try:
+        dirname = Path("debug_tmpdir")
+        if not dirname.exists():
+            dirname.mkdir(parents=True, exist_ok=True)
+        temp_dir_path = dirname
+        logging.debug(f"Debug temporary directory created at {temp_dir_path}")
+        os.chdir(temp_dir_path)
+        yield temp_dir_path
+    finally:
+        os.chdir(cwd)
+
 def run_cmd(
-    cmd: str,
+    cmd: str|list,
     desc=None,
     log: Optional[str] = None,
     exit_on_error: bool=True,
     timeout: Optional[float] = None,
 ) -> sp.CompletedProcess:
+    if isinstance(cmd, list):
+        cmd = " ".join(str(c) for c in cmd)
     if desc:
         logging.info(desc)
     processed_cmd = cmd.replace("&&","XX")
@@ -119,3 +136,56 @@ def get_software_version(version_command: str, version_regex: str) -> str:
         if not match:
             raise ValueError(f"Could not determine software version from command: {version_command}")
         return match.group(1)
+
+def parse_software_version(output: str, version_regex: str) -> str:
+    match = re.search(version_regex, output)
+    if not match:
+        raise ValueError(f"Could not determine software version from output: {output}")
+    return match.group(1)
+
+
+def run_in_docker(
+    cmd: list[str | Path],
+    image: str,
+    extra_docker_args: list[str] | None = None,
+) -> subprocess.CompletedProcess:
+    """
+    Run a command inside a Docker container using the specified image.
+    Return the stdout and stderr of the command executed inside the Docker container.
+    """
+    docker_cmd = ["docker", "run", "--rm"]
+
+    if extra_docker_args:
+        docker_cmd.extend(extra_docker_args)
+
+    translated_cmd = []
+    mounts = {}
+
+    for arg in cmd:
+        if isinstance(arg, Path):
+            host_path = arg.resolve()
+            host_dir = host_path.parent
+
+            if host_dir not in mounts:
+                container_dir = f"/mnt/volume{len(mounts)}"
+                mounts[host_dir] = container_dir
+
+                docker_cmd.extend([
+                    "-v",
+                    f"{host_dir}:{container_dir}",
+                ])
+
+            container_path = (
+                Path(mounts[host_dir]) / host_path.name
+            )
+
+            translated_cmd.append(str(container_path))
+
+        else:
+            translated_cmd.append(str(arg))
+
+    docker_cmd.append(image)
+    docker_cmd.extend(translated_cmd)
+    logging.info("Running Docker command: %s", " ".join(docker_cmd))
+    result = sp.run(docker_cmd, check=True, capture_output=True, text=True)
+    return result

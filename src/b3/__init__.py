@@ -11,9 +11,25 @@ __version__ = "0.1.0"
 from .jobs import app as jobs_app
 from .workflows import app as workflows_app
 from .utils import app as utils_app
+from .setup import app as setup_app
 
 # Import tool modules so their @app.command decorators register with the jobs app.
-from .tools import amrfinder, fasta_stats, mlst, plasmidfinder, quast, rmlst  
+from .tools import (
+    fastp, 
+    amrfinder, 
+    fasta_stats, 
+    mlst, 
+    plasmidfinder, 
+    quast, 
+    rmlst,
+    shovill,
+    ssiamb,
+    sylph,
+    kraken2,
+    bracken,
+    pmlst,
+    uqcme
+)
 
 # automatically show help when no command is provided
 app = typer.Typer(
@@ -24,4 +40,4 @@ app = typer.Typer(
 app.add_typer(jobs_app, name="job", help="Commands related to jobs")
 app.add_typer(workflows_app, name="wf", help="Commands related to workflows")
 app.add_typer(utils_app, name="utils", help="Commands related to utils")
-
+app.add_typer(setup_app, name="setup", help="Commands related to setup")

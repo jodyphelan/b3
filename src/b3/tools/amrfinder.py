@@ -1,9 +1,12 @@
 from pathlib import Path
 import csv
-from b3.utils import get_software_version, run_cmd
+import sys
+from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version
 from b3.models import AmrfinderResult, AmrfinderHit
 from typing import Annotated
 from b3.jobs import app
+
+DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/ncbi-amrfinderplus:4.2.7--hf69ffd2_0"
 
 def parse_amrfinder_output(output_file: Path, software_version: str, db_version: str) -> AmrfinderResult:
     """Parse the AMRFinder output file and return an AmrfinderResult object."""
@@ -13,7 +16,7 @@ def parse_amrfinder_output(output_file: Path, software_version: str, db_version:
         for row in csv.DictReader(f, delimiter="\t"):
             hit = AmrfinderHit(
                 protein_id=row["Protein id"],
-                contig_id=row["Contig id"],
+                contig=row["Contig id"],
                 start=int(row["Start"]),
                 stop=int(row["Stop"]),
                 strand=row["Strand"],
@@ -27,8 +30,8 @@ def parse_amrfinder_output(output_file: Path, software_version: str, db_version:
                 method=row["Method"],
                 target_length=int(row["Target length"]),
                 reference_sequence_length=int(row["Reference sequence length"]),
-                coverage_of_reference=float(row["% Coverage of reference"]),
-                identity_to_reference=float(row["% Identity to reference"]),
+                coverage=float(row["% Coverage of reference"]),
+                identity=float(row["% Identity to reference"]),
                 alignment_length=int(row["Alignment length"]),
                 closest_reference_accession=row["Closest reference accession"],
                 closest_reference_name=row["Closest reference name"],
@@ -51,12 +54,38 @@ def parse_amrfinder_output(output_file: Path, software_version: str, db_version:
 def job_amrfinder(
     input_fasta: Annotated[Path, "Input FASTA file"], 
     output_file: Annotated[Path, "Output file for AMRFinder results"], 
-    threads: Annotated[int, "Number of threads to use"] = 1
+    threads: Annotated[int, "Number of threads to use"] = 1,
+    db_path: Annotated[Path, "Path to the AMRFinder database"] = Path(sys.base_prefix + "/share/amrfinderplus/data/latest"),
+    docker: Annotated[bool, "Whether to run AMRFinder inside a Docker container"] = False,
 ) -> AmrfinderResult:
     """Run an AMRFinder job on the input FASTA file and save results to the output directory."""
-    cmd = f"amrfinder --threads {threads} --nucleotide {input_fasta} > {output_file}"
-    run_cmd(cmd)
-    software_version = get_software_version("amrfinder --version", "(.+)")
-    db_version = get_software_version("amrfinder --database_version","Database version: (.+)")
+
+    
+    cmd = [
+        "amrfinder",
+        "--threads", str(threads),
+        "--nucleotide", input_fasta,
+        "-o", output_file,
+        "--database", db_path,
+    ]
+    tool_version_cmd = ["amrfinder", "--version"]
+    tool_version_regex = r"(.+)"
+    db_version_cmd = ["amrfinder", "--database_version", "--database", db_path]
+    db_version_regex = r"Database version: (.+)"
+
+    if docker:
+        run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
+        software_version = parse_software_version(
+            run_in_docker(tool_version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            tool_version_regex
+        )
+        db_version = parse_software_version(
+            run_in_docker(db_version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            db_version_regex
+        )
+    else:
+        run_cmd(cmd)
+        software_version = get_software_version(tool_version_cmd, tool_version_regex)
+        db_version = get_software_version(db_version_cmd, db_version_regex)
 
     return parse_amrfinder_output(output_file, software_version, db_version)

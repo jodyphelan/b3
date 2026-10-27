@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Annotated
 from b3.models import QuastResult
-from b3.utils import get_software_version, run_cmd
+from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version
 from ..jobs import app
-from platform import platform
-import os
+
+DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2"
 
 def parse_quast_results(output_dir: Path, software_version: str) -> QuastResult:
     """Parse QUAST results from the output directory and return a QuastResult object."""
@@ -17,7 +17,8 @@ def parse_quast_results(output_dir: Path, software_version: str) -> QuastResult:
         "N50": {"name":"N50","type": int},
         "N90": {"name":"N90","type": int},
         "Total length": {"name":"total_length","type": int},
-        "Largest contig": {"name":"largest_contig","type": int}
+        "Largest contig": {"name":"largest_contig","type": int},
+        "# N's per 100 kbp": {"name":"n_per_100_kbp","type": float}
     }
     for line in open((output_dir / "report.tsv")):
         row = line.strip().split("\t")
@@ -35,18 +36,27 @@ def parse_quast_results(output_dir: Path, software_version: str) -> QuastResult:
 def job_quast(
     input_fasta: Annotated[Path, "Input FASTA file"], 
     output_dir: Annotated[Path, "Output directory for QUAST results"], 
-    threads: Annotated[int, "Number of threads to use"] = 1
+    threads: Annotated[int, "Number of threads to use"] = 1,
+    docker: Annotated[bool, "Whether to run QUAST inside a Docker container"] = False,
 ) -> QuastResult:
     """Run a QUAST job on the input FASTA and FASTQ files and save results to the output directory."""
-    if "arm64" in platform():
-        #docker run --rm -v "$PWD:/data/" quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2  quast --nanopore /data/filtered_reads.fastq.gz  -o /data/ /data/contigs.fasta --threads 4
-        cwd = os.getcwd()
-        fasta_input_dir = input_fasta.parent
-        cmd = f'docker run --rm -v "{fasta_input_dir}:/data/" -v "{cwd}:/output/" quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 quast -o /output/{output_dir.name} /data/{input_fasta.name} --threads {threads}'
-        run_cmd(cmd)
-        software_version = get_software_version("docker run --rm quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 quast --version", "QUAST v(.+)")
+    cmd = [
+        "quast",
+        "-o",
+        output_dir,
+        input_fasta,
+        "--threads",
+        str(threads),
+    ]
+    version_cmd = ["quast", "--version"]
+    version_regex = r"QUAST v(.+)"
+    if docker:
+        run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
+        software_version = parse_software_version(
+            run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            version_regex,
+        )
     else:
-        cmd = f"quast -o {output_dir} {input_fasta} --threads {threads}"
         run_cmd(cmd)
-        software_version = get_software_version("quast --version", "QUAST v(.+)")
+        software_version = get_software_version(version_cmd, version_regex)
     return parse_quast_results(output_dir, software_version)

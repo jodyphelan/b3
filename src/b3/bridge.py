@@ -2,12 +2,16 @@ import json
 
 from .models import (
     MlstResult,
-    AmrfinderHit,
     AmrfinderResult,
     PlasmidfinderResult,
     RmlstResult,
     QuastResult,
     FastaqcResult,
+    FastpResult,
+    SsiambResult,
+    PmlstResult,
+    BrackenResult,
+    UqcmeResult,
 )
 from pathlib import Path
 import csv
@@ -21,6 +25,13 @@ def combine_results(
     rmlst_result: Optional[RmlstResult] = None,
     fasta_stats_result: Optional[FastaqcResult] = None,
     plasmidfinder_result: Optional[PlasmidfinderResult] = None,
+    fastp_result: Optional[FastpResult] = None,
+    pmlst_result: Optional[PmlstResult] = None,
+    bracken_result: Optional[BrackenResult] = None,  
+    quast_result: Optional[QuastResult] = None,
+    ssiamb_result: Optional[SsiambResult] = None,
+    uqcme_result: Optional[UqcmeResult] = None,
+
 ):
     rows = []
 
@@ -38,6 +49,10 @@ def combine_results(
             'key': 'mlst:scheme',
             'value': mlst_result.scheme
         })
+        rows.append({
+            'key': 'mlst:alleles',
+            'value': ",".join(map(str, mlst_result.alleles))
+        })
 
     # amrfinder
     if amrfinder_result is not None:
@@ -49,10 +64,15 @@ def combine_results(
             'key': 'amrfinder:database_version',
             'value': amrfinder_result.database_version
         })
+        hit_keys = ["element_symbol", "element_name","subclass","strand","stop","start","identity","coverage","contig"]
+        hit_data = {k:[] for k in hit_keys}
         for hit in amrfinder_result.hits:
+            for hit_key in hit_keys:
+                hit_data[hit_key].append(getattr(hit, hit_key))
+        for hit_key in hit_keys:
             rows.append({
-                'key': f'amrfinder:hit:{hit.element_symbol}',
-                'value': hit.contig_id
+                'key': f'amrfinder:{hit_key}',
+                'value': "|".join(map(str, hit_data[hit_key]))
             })
 
     # rmlst
@@ -71,43 +91,23 @@ def combine_results(
         })
 
     # quast
+    if quast_result is not None:
+        for key in ["software_version", "num_contigs", "total_length", "largest_contig", "N50", "N90", "L50", "L90","gc_content","n_per_100_kbp"]:
+            rows.append({
+                'key': f'quast:{key}',
+                'value': getattr(quast_result, key)
+            })
+
+    
+    
+    
     if fasta_stats_result is not None:
-        rows.append({
-            'key': 'fasta_stats:software_version',
-            'value': fasta_stats_result.software_version
-        })
-        rows.append({
-            'key': 'fasta_stats:num_contigs',
-            'value': fasta_stats_result.num_contigs
-        })
-        rows.append({
-            'key': 'fasta_stats:gc_content',
-            'value': fasta_stats_result.gc_content
-        })
-        rows.append({
-            'key': 'fasta_stats:L50',
-            'value': fasta_stats_result.L50
-        })
-        rows.append({
-            'key': 'fasta_stats:L90',
-            'value': fasta_stats_result.L90
-        })
-        rows.append({
-            'key': 'fasta_stats:N50',
-            'value': fasta_stats_result.N50
-        })
-        rows.append({
-            'key': 'fasta_stats:N90',
-            'value': fasta_stats_result.N90
-        })
-        rows.append({
-            'key': 'fasta_stats:total_length',
-            'value': fasta_stats_result.total_length
-        })
-        rows.append({
-            'key': 'fasta_stats:largest_contig',
-            'value': fasta_stats_result.largest_contig
-        })
+        keys = ["software_version", "num_contigs", "gc_content", "L50", "L90", "N50", "N90", "total_length", "largest_contig"]
+        for key in keys:
+            rows.append({
+                'key': f'fasta_stats:{key}',
+                'value': getattr(fasta_stats_result, key)
+            })
 
     # plasmidfinder
     if plasmidfinder_result is not None:
@@ -119,10 +119,90 @@ def combine_results(
             'key': 'plasmidfinder:database_version',
             'value': plasmidfinder_result.database_version
         })
+        hit_keys = ["name", "contig", "identity", "coverage"]
+        hit_data = {k:[] for k in hit_keys}
         for hit in plasmidfinder_result.hits:
+            for hit_key in hit_keys:
+                hit_data[hit_key].append(getattr(hit, hit_key))
+        for hit_key in hit_keys:
             rows.append({
-                'key': f'plasmidfinder:hit:{hit.name}',
-                'value': hit.query_id
+                'key': f'plasmidfinder:{hit_key}',
+                'value': "|".join(map(str, hit_data[hit_key]))
+            })
+    # ssiamb
+    if ssiamb_result is not None:
+        rows.append({
+            'key': 'ssiamb:software_version',
+            'value': ssiamb_result.software_version
+        })
+        rows.append({
+            'key': 'ssiamb:count',
+            'value': ssiamb_result.count
+        })
+
+    # fastp
+    if fastp_result is not None:
+        for key, value in fastp_result.dict().items():
+            rows.append({
+                'key': f'fastp:{key}',
+                'value': value
+            })
+
+    # bracken
+    if bracken_result is not None:
+        rows.append({
+            'key': 'bracken:software_version',
+            'value': bracken_result.software_version
+        })
+        rows.append({
+            'key': 'bracken:database_version',
+            'value': bracken_result.database_version
+        })
+        
+        
+        unclassified_hit = [hit for hit in bracken_result.hits if hit.taxonomy_lvl == 'U'][0]
+        classified_hits = [hit for hit in bracken_result.hits if hit.taxonomy_lvl != 'U']
+
+        rows.append({
+            'key': 'bracken:species',
+            'value': f"{classified_hits[0].name} + {unclassified_hit.name}"
+        })
+        rows.append({
+            'key': 'bracken:spcecies_pct',
+            'value': unclassified_hit.bracken_fraction_total_seqs + classified_hits[0].bracken_fraction_total_seqs
+        })
+        rows.append({
+            'key': 'bracken:species1',
+            'value': classified_hits[0].name
+        })
+        rows.append({
+            'key': 'bracken:species1_pct',
+            'value': classified_hits[0].bracken_fraction_total_seqs
+        })
+        rows.append({
+            'key': 'bracken:species2',
+            'value': unclassified_hit.name
+        })
+        rows.append({
+            'key': 'bracken:species2_pct',
+            'value': unclassified_hit.bracken_fraction_total_seqs
+        })
+
+    # uqcme
+    if uqcme_result is not None:
+        for key, value in uqcme_result.dict().items():
+            rows.append({
+                'key': f'uqcme:{key}',
+                'value': value
+            })
+
+    # pmlst 
+
+    if pmlst_result is not None:
+        for key, value in pmlst_result.dict().items():
+            rows.append({
+                'key': f'pmlst:{key}',
+                'value': value
             })
 
     jsonified_rows = []
@@ -132,6 +212,7 @@ def combine_results(
         if tmp not in jsonified_rows:
             jsonified_rows.append(tmp)
             final_rows.append(row)
+
     # write to output file
     writer = csv.DictWriter(output_file.open('w', newline=''), fieldnames=['key', 'value'], delimiter='\t')
     writer.writeheader()

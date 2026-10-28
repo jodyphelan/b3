@@ -13,6 +13,7 @@ from .models import (
     BrackenResult,
     UqcmeResult,
 )
+import b3
 from pathlib import Path
 import csv
 from typing import Optional
@@ -33,7 +34,12 @@ def combine_results(
     uqcme_result: Optional[UqcmeResult] = None,
 
 ):
-    rows = []
+    rows = [
+        {
+            'key': 'b3:version',
+            'value': b3.__version__
+        }
+    ]
 
     # mlst
     if mlst_result is not None:

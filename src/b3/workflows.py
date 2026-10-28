@@ -95,33 +95,11 @@ def bifrost_ONT(
             docker=docker
         )
 
-        pmlst_output_file = Path("pmlst_results.txt")
         pmlst_results = job_pmlst(
             input_fasta=input_fasta,
-            output_file=pmlst_output_file,
-            docker=docker
-        )
-
-        temp_combined_output_file = Path("temp_combined_results.tsv")
-        combine_results(
-            output_file=temp_combined_output_file,
-            quast_result=quast_results,
-            plasmidfinder_result=plasmidfinder_results,
-            rmlst_result=rmlst_results,
-            mlst_result=mlst_results,
-            pmlst_result=pmlst_results,
-            amrfinder_result=amrfinder_results,
-        )
-
-        uqcme_input_file = Path("uqcme_input.tsv")
-        create_uqcme_input(
-            input_tsv=temp_combined_output_file,
-            species=species,
-            output_tsv=uqcme_input_file
-        )
-
-        uqcme_results = job_uqcme(
-            input_tsv=uqcme_input_file,
+            pf_report=plasmidfinder_output_dir / "results_tab.tsv",
+            database=dbs["pmlst"],
+            output_dir=Path("."),
             docker=docker
         )
 
@@ -134,16 +112,15 @@ def bifrost_ONT(
             mlst_result=mlst_results,
             pmlst_result=pmlst_results,
             amrfinder_result=amrfinder_results,
-            uqcme_result=uqcme_results
         )
 
         files_to_save = [
             "combined_results.tsv",
         ]
 
-        for file_name in files_to_save.values():
+        for file_name in files_to_save:
             if Path(file_name).exists():
-                Path(file_name).rename(output_dir / file_name.name)
+                Path(file_name).rename(output_dir / Path(file_name).name)
 
 @app.command()
 def bifrost_illumina(

@@ -73,3 +73,23 @@ def job_plasmidfinder(
     return parse_plasmidfinder_results(output_dir / "results_tab.tsv", software_version, db_version)
 
 
+
+
+@app.command(
+    no_args_is_help=True,
+    help="Download the PlasmidFinder database to the specified output directory"
+)
+def download_plasmidfinder_db(
+    outdir: Path,
+    docker: Annotated[bool, "Whether to run the download inside a Docker container"] = False,
+):
+    cmds = [
+        "git",
+        "clone",
+        "https://bitbucket.org/genomicepidemiology/plasmidfinder_db.git",
+        str(outdir)
+    ]
+    if docker:
+        run_in_docker(cmds, DOCKER_CONTAINER_IMAGE)
+    else:
+        run_cmd(cmds)

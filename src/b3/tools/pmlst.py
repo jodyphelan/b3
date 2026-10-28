@@ -80,3 +80,22 @@ def job_pmlst(
     database_version = get_db_version(database)
     
     return parse_pmlst_report(output_dir / "simple_output.tsv", VERSION, database_version)
+
+
+
+@app.command(
+    no_args_is_help=True,
+    help="Download the pMLST database to the specified output directory"
+)
+def download_pmlst_db(
+    outdir: Path,
+    docker: Annotated[bool, "Whether to run the download inside a Docker container"] = False
+):
+    cmds = [
+        "pmlst-download-db",
+        outdir
+    ]
+    if docker:
+        run_in_docker(cmds, DOCKER_IMAGE)
+    else:
+        run_cmd(cmds)

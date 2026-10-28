@@ -89,3 +89,18 @@ def job_amrfinder(
         db_version = get_software_version(db_version_cmd, db_version_regex)
 
     return parse_amrfinder_output(output_file, software_version, db_version)
+
+
+@app.command(
+    no_args_is_help=True,
+    help="Download the AMRFinder database to the local directory"
+)
+def download_amrfinder_db(outdir: Path, docker: Annotated[bool, "Whether to run the download inside a Docker container"] = False):
+    cmds = [
+        "amrfinder_update",
+        "-d", outdir
+    ]
+    if docker:
+        run_in_docker(cmds, DOCKER_CONTAINER_IMAGE)
+    else:
+        run_cmd(cmds)

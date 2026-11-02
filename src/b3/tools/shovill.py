@@ -2,10 +2,11 @@ import logging
 from pathlib import Path
 from typing import Annotated
 from b3.jobs import app
-from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version
+from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version, run_in_conda
 from b3.models import ShovillResult
 import json
 
+CONDA_ENV_NAME = "shovill"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/shovill:1.4.2--hdfd78af_1"
 
 
@@ -21,6 +22,7 @@ def job_shovill(
     output_dir: Annotated[Path, "Output directory for assembled contigs"], 
     threads: Annotated[int, "Number of threads to use for shovill"] = 1,
     docker: Annotated[bool, "Whether to run shovill inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run shovill inside a Conda environment"] = False,
 ) -> ShovillResult:
     logging.info(f"Running shovill on {input_read1} and {input_read2}")
 
@@ -55,6 +57,12 @@ def job_shovill(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = parse_software_version(
             run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            version_regex,
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(version_cmd, CONDA_ENV_NAME).stdout,
             version_regex,
         )
     else:

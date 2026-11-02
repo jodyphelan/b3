@@ -2,9 +2,10 @@
 import csv
 from pathlib import Path
 from b3.jobs import app
-from b3.utils import get_software_version, parse_software_version, run_cmd, run_in_docker
+from b3.utils import get_software_version, parse_software_version, run_cmd, run_in_docker, run_in_conda
 from b3.models import UqcmeResult
 
+CONDA_ENV_NAME = "uqcme"
 DOCKER_CONTAINER_IMAGE="quay.io/biocontainers/uqcme-cli:0.9.4--pyhdfd78af_0"
 
 @app.command(
@@ -57,7 +58,8 @@ def parse_uqcme_output(input_file: Path, software_version: str) -> UqcmeResult:
 )
 def job_uqcme(
     input_tsv: Path,
-    docker: bool = False
+    docker: bool = False,
+    conda: bool = False,
 ):
     cmd = [
         "uqcme",
@@ -72,6 +74,12 @@ def job_uqcme(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE, extra_docker_args=["-w", "/mnt/volume0"])
         software_version = parse_software_version(
             run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            r"uQCme (.+) ",
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(version_cmd, CONDA_ENV_NAME).stdout,
             r"uQCme (.+) ",
         )
     else:

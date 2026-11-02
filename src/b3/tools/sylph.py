@@ -2,11 +2,12 @@ from typing import Annotated, Optional
 from pathlib import Path
 from b3.models import SylphResult
 from b3.jobs import app
-from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version
+from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version, run_in_conda
 import tempfile
 import shutil
 import os.path
 
+CONDA_ENV_NAME = "sylph"
 DOCKER_CONTAINER_IMAGE="quay.io/biocontainers/sylph:1.0.0--hb42e459_0"
 
 def parse_sylph_output(software_version: str) -> SylphResult:
@@ -25,6 +26,7 @@ def job_sylph(
     output_tsv: Annotated[Path, "Output CSV with taxonomic information"],
     threads: Annotated[int, "Number of threads to use"] = 1,
     docker: Annotated[bool, "Whether to run shovill inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run sylph inside a Conda environment"] = False,
 ):
     with tempfile.TemporaryDirectory() as tempdir:
         tempdir = Path(tempdir)
@@ -48,6 +50,8 @@ def job_sylph(
 
         if docker:
             run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
+        elif conda:
+            run_in_conda(cmd, CONDA_ENV_NAME)
         else:
             run_cmd(cmd)
 
@@ -70,6 +74,12 @@ def job_sylph(
                         run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
                         r"sylph (.+)",
                     )
+        elif conda:
+            run_in_conda(cmd, CONDA_ENV_NAME)
+            software_version = parse_software_version(
+                run_in_conda(version_cmd, CONDA_ENV_NAME).stdout,
+                r"sylph (.+)",
+            )
         else:
             run_cmd(cmd)
             software_version = get_software_version("sylph --version", r"sylph (.+)")

@@ -189,3 +189,21 @@ def run_in_docker(
     logging.info("Running Docker command: %s", " ".join(docker_cmd))
     result = sp.run(docker_cmd, check=True, capture_output=True, text=True)
     return result
+
+import sys
+def run_in_conda(
+    cmd: list[str | Path],
+    conda_env_name: str,
+    conda_env_base_path: Path = Path(sys.base_prefix + f"/envs/"),
+) -> subprocess.CompletedProcess:
+    """
+    Run a command inside a specified Conda environment.
+    Return the stdout and stderr of the command executed inside the Conda environment.
+    """
+    conda_env_path = conda_env_base_path / conda_env_name
+    conda_cmd = ["conda", "run", "--no-capture-output", "-p", str(conda_env_path)]
+
+    conda_cmd.extend(str(arg) for arg in cmd)
+    logging.info("Running Conda command: %s", " ".join(conda_cmd))
+    result = sp.run(conda_cmd, check=True, capture_output=True, text=True)
+    return result

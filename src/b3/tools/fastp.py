@@ -3,13 +3,14 @@ from pathlib import Path
 import re
 from typing import Annotated
 from b3.jobs import app
-from b3.utils import run_cmd, get_software_version, parse_software_version, run_in_docker
+from b3.utils import run_cmd, get_software_version, parse_software_version, run_in_docker, run_in_conda
 from b3.models import FastpResult
 import json
 from pathlib import Path
 
 
 
+CONDA_ENV_NAME = "fastp"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/fastp:1.4.0--h43da1c4_0"
 VERSION_REGEX = r"fastp (.+)"
 
@@ -51,6 +52,7 @@ def job_fastp(
     json_output: Annotated[Path, "Output JSON file for fastp results"],
     threads: Annotated[int, "Number of threads to use for fastp"] = 1, 
     docker: Annotated[bool, "Whether to run fastp inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run fastp inside a Conda environment"] = False,
 ) -> dict:
     logging.info(f"Running fastp on {input_read1} and {input_read2}")
     cmd = [
@@ -68,6 +70,12 @@ def job_fastp(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = parse_software_version(
             run_in_docker(["fastp", "--version"], DOCKER_CONTAINER_IMAGE).stdout, 
+            VERSION_REGEX
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(["fastp", "--version"], CONDA_ENV_NAME).stdout,
             VERSION_REGEX
         )
     else:

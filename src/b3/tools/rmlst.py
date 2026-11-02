@@ -4,10 +4,11 @@ import json
 
 from b3.models import RmlstResult
 from typing import Annotated
-from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version
+from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version, run_in_conda
 
 from ..jobs import app
 
+CONDA_ENV_NAME = "rmlst"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/rmlst-cli:1.1--pyhdfd78af_0"
 
 def parse_rmlst_output(output_file: Path, software_version: str) -> RmlstResult:
@@ -28,6 +29,7 @@ def job_rmlst(
     input_fasta: Annotated[Path, "Input FASTA file"],
     output_file: Annotated[Path, "Output file for rMLST results"],
     docker: Annotated[bool, "Whether to run rMLST inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run rmlst inside a Conda environment"] = False,
 ) -> RmlstResult:
     """Run an rMLST job on the input FASTA file and save results to the output directory."""
     cmd = [
@@ -43,6 +45,12 @@ def job_rmlst(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = parse_software_version(
             run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            version_regex,
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(version_cmd, CONDA_ENV_NAME).stdout,
             version_regex,
         )
     else:

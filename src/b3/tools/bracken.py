@@ -4,13 +4,14 @@ import re
 from typing import Annotated
 import typer
 from b3.jobs import app
-from b3.utils import run_cmd, get_software_version, parse_software_version, run_in_docker, get_absolute_path
+from b3.utils import run_cmd, get_software_version, parse_software_version, run_in_docker, get_absolute_path, run_in_conda
 from b3.models import BrackenResult, BrackenHit
 import json
 import csv
 from pathlib import Path
 
 
+CONDA_ENV_NAME = "bracken"
 DOCKER_IMAGE = "quay.io/biocontainers/bracken:3.1p1--hc52dbad_0"
 VERSION = r"3.1"
 
@@ -45,7 +46,8 @@ def job_bracken(
     report: Annotated[Path, typer.Option(help="Input report file", exists=True, callback=get_absolute_path)],
     database: Annotated[Path, typer.Option(help="Kraken2 database path", exists=True, callback=get_absolute_path)],
     output: Annotated[Path, typer.Option(help="Output JSON file", callback=get_absolute_path)],
-    docker: Annotated[bool, typer.Option(help="Run in Docker", is_flag=True)] = False
+    docker: Annotated[bool, typer.Option(help="Run in Docker", is_flag=True)] = False,
+    conda: Annotated[bool, typer.Option(help="Run in a Conda environment", is_flag=True)] = False,
 
 ):
     # est_abundance.py -i '/users/data/Services/galaxy/data/7/c/3/dataset_7c31859a-7b72-4971-b96e-6758e5dfdc31.dat' -k '/users/data/Services/galaxy/server/tool-data/kraken2_databases/2024-10-09T124501Z_minikraken2_v2_8GB/database150mers.kmer_distrib' -l S -t 10 -o '/users/data/Services/galaxy/data/4/5/2/dataset_45242ff3-d5ba-45b9-91f3-08288f368031.dat'  --out-report bracken.report
@@ -61,6 +63,8 @@ def job_bracken(
 
     if docker:
         run_in_docker(cmd, DOCKER_IMAGE)
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
     else:
         run_cmd(cmd)
 

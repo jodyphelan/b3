@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import Annotated
 from b3.models import QuastResult
-from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version
+from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version, run_in_conda
 from ..jobs import app
 
+CONDA_ENV_NAME = "quast"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2"
 
 def parse_quast_results(output_dir: Path, software_version: str) -> QuastResult:
@@ -38,6 +39,7 @@ def job_quast(
     output_dir: Annotated[Path, "Output directory for QUAST results"], 
     threads: Annotated[int, "Number of threads to use"] = 1,
     docker: Annotated[bool, "Whether to run QUAST inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run quast inside a Conda environment"] = False,
 ) -> QuastResult:
     """Run a QUAST job on the input FASTA and FASTQ files and save results to the output directory."""
     cmd = [
@@ -54,6 +56,12 @@ def job_quast(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = parse_software_version(
             run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            version_regex,
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(version_cmd, CONDA_ENV_NAME).stdout,
             version_regex,
         )
     else:

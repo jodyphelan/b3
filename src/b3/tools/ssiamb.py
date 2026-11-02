@@ -3,9 +3,10 @@ from pathlib import Path
 
 from b3.models import SsiambResult
 from b3.jobs import app
-from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version
+from b3.utils import run_cmd, get_software_version, run_in_docker, parse_software_version, run_in_conda
 import csv
 
+CONDA_ENV_NAME = "ssiamb"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/ssiamb:1.0.0--pyhdfd78af_0"
 
 
@@ -28,6 +29,7 @@ def job_ssiamb(
     output_dir: Path,
     threads: int = 1,
     docker: bool = False,
+    conda: bool = False,
 ) -> SsiambResult:
     # ssiamb self --r1 '/users/data/Services/galaxy/data/2/4/b/dataset_24b57cec-8ed0-4e0d-ac67-2047dfc5be83.dat' --r2 '/users/data/Services/galaxy/data/7/1/7/dataset_717fa70d-5df4-4a60-92d5-ae113112d917.dat' --assembly '/users/data/Services/galaxy/data/b/2/1/dataset_b212c97a-d08e-41c4-89c4-d1fa8b02c126.dat' --sample 'sample1' --outdir outputs --threads "${GALAXY_SLOTS:-1}" --dp-min '10' --maf-min '0.1'
     cmd = [
@@ -54,6 +56,12 @@ def job_ssiamb(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = parse_software_version(
             run_in_docker(["ssiamb", "--version"], DOCKER_CONTAINER_IMAGE).stdout,
+            r"ssiamb (.+)",
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(["ssiamb", "--version"], CONDA_ENV_NAME).stdout,
             r"ssiamb (.+)",
         )
     else:

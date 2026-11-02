@@ -44,6 +44,7 @@ def bifrost_ONT(
     db_dir: Annotated[Path, typer.Argument(help="Path to the databases directory", exists=True, callback=get_absolute_path)] = Path(DB_DIR),
     threads: Annotated[int, typer.Option(help="Number of threads to use")] = 1,
     docker: Annotated[bool, typer.Option(help="Run in Docker", is_flag=True)] = False,
+    conda: Annotated[bool, typer.Option(help="Run in a Conda environment", is_flag=True)] = False,
 ):
     """Bifrost ONT workflow."""
     
@@ -59,7 +60,8 @@ def bifrost_ONT(
         quast_results = job_quast(
             input_fasta=input_fasta, 
             output_dir=quast_output_dir,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
         
         mlst_output_file = Path("mlst_results.txt")
@@ -67,7 +69,8 @@ def bifrost_ONT(
             input_fasta=input_fasta,
             output_file=mlst_output_file,
             threads=threads, 
-            docker=docker
+            docker=docker,
+            conda=conda
         )
         
         amrfinder_output_file = Path("amrfinder_results.txt")
@@ -76,14 +79,16 @@ def bifrost_ONT(
             output_file=amrfinder_output_file, 
             threads=threads, 
             db_path=dbs["amrfinder"], 
-            docker=docker
+            docker=docker,
+            conda=conda
         )
         
         rmlst_output_file = Path("rmlst_results.txt")
         rmlst_results = job_rmlst(
             input_fasta=input_fasta, 
             output_file=rmlst_output_file,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
         
         plasmidfinder_output_dir = Path("plasmidfinder_output")
@@ -92,7 +97,8 @@ def bifrost_ONT(
             output_dir=plasmidfinder_output_dir, 
             db=dbs["plasmidfinder"], 
             threads=threads, 
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         pmlst_results = job_pmlst(
@@ -100,7 +106,8 @@ def bifrost_ONT(
             pf_report=plasmidfinder_output_dir / "results_tab.tsv",
             database=dbs["pmlst"],
             output_dir=Path("."),
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         final_output_file = Path("combined_results.tsv")
@@ -131,6 +138,7 @@ def bifrost_illumina(
     db_dir: Annotated[Path, typer.Argument(help="Path to database directory", exists=True, callback=get_absolute_path)] = Path(DB_DIR),
     threads: Annotated[int, typer.Option(help="Number of threads to use")] = 1,
     docker: Annotated[bool, typer.Option(help="Run in Docker", is_flag=True)] = False,
+    conda: Annotated[bool, typer.Option(help="Run in a Conda environment", is_flag=True)] = False,
 ):
     """Bifrost Illumina workflow."""
 
@@ -141,7 +149,7 @@ def bifrost_illumina(
 
     dbs = get_dbs(db_dir)
 
-    with debug_temporary_directory():
+    with temporary_directory():
         fastp_output_read1 = Path("fastp_output_read1.fastq")
         fastp_output_read2 = Path("fastp_output_read2.fastq")
         fastp_output_json = Path("fastp_output.json")
@@ -152,7 +160,8 @@ def bifrost_illumina(
             output_read2=fastp_output_read2,
             json_output=fastp_output_json,
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         shovill_output_dir = Path("shovill_output")
@@ -162,7 +171,8 @@ def bifrost_illumina(
             input_read2=fastp_output_read2,
             output_dir=shovill_output_dir,
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         quast_output_dir = Path("quast_output")
@@ -170,7 +180,8 @@ def bifrost_illumina(
             input_fasta=shovill_contigs,
             output_dir=quast_output_dir,
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         amrfinder_output_file = Path("amrfinder_output.txt")
@@ -179,7 +190,8 @@ def bifrost_illumina(
             output_file=amrfinder_output_file,
             db_path=dbs["amrfinder"],
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
 
@@ -191,7 +203,8 @@ def bifrost_illumina(
             report_file=kraken_report_file,
             database=dbs["kraken2"],
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         bracken_report_file = Path("bracken_report.txt")
@@ -199,7 +212,8 @@ def bifrost_illumina(
             report=kraken_report_file,
             database=dbs["kraken2"],
             output=bracken_report_file,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         plasmidfinder_output_dir = Path("plasmidfinder_output")
@@ -208,7 +222,8 @@ def bifrost_illumina(
             output_dir=plasmidfinder_output_dir,
             db=dbs["plasmidfinder"],
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
 
@@ -216,7 +231,8 @@ def bifrost_illumina(
         rmlst_results = job_rmlst(
             input_fasta=shovill_contigs,
             output_file=rmlst_output_file,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         mlst_output_file = Path("mlst_output.txt")
@@ -224,7 +240,8 @@ def bifrost_illumina(
             input_fasta=shovill_contigs,
             output_file=mlst_output_file,
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
 
@@ -233,7 +250,8 @@ def bifrost_illumina(
             pf_report=plasmidfinder_output_dir / "results_tab.tsv",
             database=dbs["pmlst"],
             output_dir=Path("."),
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         
@@ -243,7 +261,8 @@ def bifrost_illumina(
             input_fasta=shovill_contigs,
             output_file=amrfinder_output_file,
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         ssiamb_output_dir = Path("ssiamb")
@@ -253,7 +272,8 @@ def bifrost_illumina(
             assembly=shovill_contigs,
             output_dir=ssiamb_output_dir,
             threads=threads,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         temp_combined_output_file = Path("temp_combined_results.tsv")
@@ -279,7 +299,8 @@ def bifrost_illumina(
 
         uqcme_results = job_uqcme(
             input_tsv=uqcme_input_file,
-            docker=docker
+            docker=docker,
+            conda=conda
         )
 
         final_output_file = Path("combined_results.tsv")

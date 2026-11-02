@@ -3,10 +3,11 @@ from pathlib import Path
 from pathlib import Path
 from typing import Annotated
 from b3.models import PlasmidfinderResult, PlasmidfinderHit
-from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version
+from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version, run_in_conda
 from b3.jobs import app
 import json
 
+CONDA_ENV_NAME = "plasmidfinder"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/plasmidfinder:2.1.6--py314hdfd78af_2"
 DOCKER_CONTAINER_VERSION = "2.1.6"
 
@@ -46,6 +47,7 @@ def job_plasmidfinder(
     db: Annotated[Path, "Path to the PlasmidFinder database"],
     threads: Annotated[int, "Number of threads to use"] = 1,
     docker: Annotated[bool, "Whether to run PlasmidFinder inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run plasmidfinder inside a Conda environment"] = False,
 ) -> PlasmidfinderResult:
     """Run a PlasmidFinder job on the input FASTA file and save results to the output directory."""
     # plasmidfinder.py -i '/users/data/Services/galaxy/data/9/4/b/dataset_94bbf2c7-61c8-46bd-a5b7-b7a08b1e62f8.dat' -p '/users/data/Services/galaxy/server/tool-data/plasmidfinder-db/3e77502_2024_03_07' -l '0.6' -t '0.9' -mp blastn -x -o output_dir -tmp temp_dir
@@ -66,6 +68,11 @@ def job_plasmidfinder(
     if docker:
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = DOCKER_CONTAINER_VERSION
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(version_cmd, CONDA_ENV_NAME).stdout, version_regex
+        )
     else:
         run_cmd(cmd)
         software_version = get_software_version(version_cmd, version_regex)

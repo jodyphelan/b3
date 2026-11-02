@@ -1,12 +1,13 @@
 from pathlib import Path
 import csv
 import sys
-from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version
+from b3.utils import get_software_version, run_cmd, run_in_docker, parse_software_version, run_in_conda
 from b3.models import AmrfinderResult, AmrfinderHit
 from typing import Annotated
 from b3.jobs import app
 
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/ncbi-amrfinderplus:4.2.7--hf69ffd2_0"
+CONDA_ENV_NAME = "amrfinder"
 
 def parse_amrfinder_output(output_file: Path, software_version: str, db_version: str) -> AmrfinderResult:
     """Parse the AMRFinder output file and return an AmrfinderResult object."""
@@ -55,8 +56,9 @@ def job_amrfinder(
     input_fasta: Annotated[Path, "Input FASTA file"], 
     output_file: Annotated[Path, "Output file for AMRFinder results"], 
     threads: Annotated[int, "Number of threads to use"] = 1,
-    db_path: Annotated[Path, "Path to the AMRFinder database"] = Path(sys.base_prefix + "/share/amrfinderplus/data/latest"),
+    db_path: Annotated[Path, "Path to the AMRFinder database"] = Path(sys.base_prefix + "/share/databases/amrfinder_db/latest"),
     docker: Annotated[bool, "Whether to run AMRFinder inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run AMRFinder inside a Conda environment"] = False,
 ) -> AmrfinderResult:
     """Run an AMRFinder job on the input FASTA file and save results to the output directory."""
 
@@ -81,6 +83,16 @@ def job_amrfinder(
         )
         db_version = parse_software_version(
             run_in_docker(db_version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            db_version_regex
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(tool_version_cmd, CONDA_ENV_NAME).stdout,
+            tool_version_regex
+        )
+        db_version = parse_software_version(
+            run_in_conda(db_version_cmd, CONDA_ENV_NAME).stdout,
             db_version_regex
         )
     else:

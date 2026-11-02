@@ -2,11 +2,12 @@ import csv
 from pathlib import Path
 from typing import Annotated
 from ..models import MlstResult, AmrfinderResult, AmrfinderHit
-from ..utils import get_software_version, run_cmd, run_in_docker, parse_software_version
+from ..utils import get_software_version, run_cmd, run_in_docker, parse_software_version, run_in_conda
 
 
 from ..jobs import app
 
+CONDA_ENV_NAME = "mlst"
 DOCKER_CONTAINER_IMAGE = "quay.io/biocontainers/mlst:2.35.0--hdfd78af_0"
 
 
@@ -35,6 +36,7 @@ def job_mlst(
     output_file: Annotated[Path, "Output file for MLST results"],
     threads: Annotated[int, "Number of threads to use"] = 1,
     docker: Annotated[bool, "Whether to run MLST inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run mlst inside a Conda environment"] = False,
 ) -> MlstResult:
     """Run an MLST job on the input FASTA file and save results to the output directory."""
     cmd = [
@@ -51,6 +53,12 @@ def job_mlst(
         run_in_docker(cmd, DOCKER_CONTAINER_IMAGE)
         software_version = parse_software_version(
             run_in_docker(version_cmd, DOCKER_CONTAINER_IMAGE).stdout,
+            version_regex,
+        )
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(
+            run_in_conda(version_cmd, CONDA_ENV_NAME).stdout,
             version_regex,
         )
     else:

@@ -3,12 +3,13 @@ from pathlib import Path
 import re
 from typing import Annotated, Optional
 from b3.jobs import app
-from b3.utils import get_absolute_path, run_cmd, get_software_version, run_in_docker, parse_software_version
+from b3.utils import get_absolute_path, run_cmd, get_software_version, run_in_docker, parse_software_version, run_in_conda
 from b3.models import Kraken2Result
 import json
 import typer
 from pathlib import Path
 
+CONDA_ENV_NAME = "kraken2"
 DOCKER_IMAGE = "quay.io/biocontainers/kraken2:2.17.2--pl5321h3be2455_0"
 VERSION_REGEX = r"Kraken version (.+)"
 
@@ -31,6 +32,7 @@ def job_kraken2(
     input_read2: Annotated[Optional[Path], typer.Option(help="Input FASTQ file for reverse reads", exists=True, callback=get_absolute_path)] = None,
     threads: Annotated[int, typer.Option(help="Number of threads to use")] = 1,
     docker: Annotated[bool, typer.Option(help="Run the command in Docker")] = False,
+    conda: Annotated[bool, typer.Option(help="Run in a Conda environment", is_flag=True)] = False,
 ):
     cmd = [
         "kraken2", 
@@ -50,6 +52,9 @@ def job_kraken2(
     if docker:
         run_in_docker(cmd, DOCKER_IMAGE)
         software_version = parse_software_version(run_in_docker(version_cmd, DOCKER_IMAGE).stdout, VERSION_REGEX)
+    elif conda:
+        run_in_conda(cmd, CONDA_ENV_NAME)
+        software_version = parse_software_version(run_in_conda(version_cmd, CONDA_ENV_NAME).stdout, VERSION_REGEX)
     else:
         run_cmd(cmd)
         software_version = parse_software_version(run_cmd(version_cmd).stdout, VERSION_REGEX)

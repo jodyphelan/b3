@@ -107,12 +107,18 @@ def job_amrfinder(
     no_args_is_help=True,
     help="Download the AMRFinder database to the local directory"
 )
-def download_amrfinder_db(outdir: Path, docker: Annotated[bool, "Whether to run the download inside a Docker container"] = False):
+def download_amrfinder_db(
+    outdir: Path, 
+    docker: Annotated[bool, "Whether to run the download inside a Docker container"] = False,
+    conda: Annotated[bool, "Whether to run the download inside a Conda environment"] = False
+):
     cmds = [
         "amrfinder_update",
         "-d", outdir
     ]
     if docker:
         run_in_docker(cmds, DOCKER_CONTAINER_IMAGE)
+    elif conda:
+        run_in_conda(cmds, CONDA_ENV_NAME)
     else:
         run_cmd(cmds)
